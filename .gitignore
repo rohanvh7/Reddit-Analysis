@@ -1,0 +1,10 @@
+.venv
+.ruff_cache
+.env
+__pycache__
+submissions.db
+.vscode
+trash
+.tmp*
+*egg-info
+submissions.db
