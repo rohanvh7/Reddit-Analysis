@@ -1,11 +1,17 @@
 import sqlite3
+from configparser import ConfigParser
+
 import praw
+import pandas as pd
+
 from dagster import (
     asset,
     Config,
     AssetExecutionContext,
     ConfigurableResource,
     ResourceParam,
+    MaterializeResult,
+    MetadataValue
 )
 
 # --- Resources ---
@@ -48,7 +54,8 @@ class SQLiteResource(ConfigurableResource):
                 url TEXT,
                 num_comments INTEGER,
                 created_utc REAL,
-                author TEXT
+                author TEXT,
+                post_data TEXT
             )
             """)
 
@@ -61,11 +68,32 @@ class SQLiteResource(ConfigurableResource):
 
 # --- Asset Configuration ---
 
-class RedditConfig(Config):
-    """Configuration for the reddit_submissions asset."""
+# --- Asset Configuration ---
 
-    subreddit: str = "Python"
-    limit: int = 10
+class AppConfigLoader:
+    """A dedicated class to load configuration from the config.ini file."""
+    def __init__(self, config_file='config.ini'):
+        self.parser = ConfigParser()
+        self.parser.read(config_file)
+
+    def get_subreddit(self, fallback='RelationShipIndia'):
+        """Gets the subreddit from the 'reddit' section of the config."""
+        return self.parser.get('reddit', 'subreddit', fallback=fallback)
+
+    def get_limit(self, fallback=100):
+        """Gets the submission limit from the 'reddit' section of the config."""
+        return self.parser.getint('reddit', 'limit', fallback=fallback)
+
+# Instantiate the loader
+config_loader = AppConfigLoader()
+
+class RedditConfig(Config):
+    """
+    Configuration for the reddit_submissions asset.
+    Defaults are now loaded via the AppConfigLoader class.
+    """
+    subreddit: str = config_loader.get_subreddit()
+    limit: int = config_loader.get_limit()
 
 # --- Asset Definition ---
 
@@ -98,8 +126,9 @@ def reddit_submissions(
             "score": submission.score,
             "url": submission.url,
             "num_comments": submission.num_comments,
-            "created_utc": submission.created_utc,
+            "created_utc":submission.created_utc,
             "author": str(submission.author),
+            "post_data":str(submission.selftext)
         })
 
     # Now, open the database connection and perform all DB operations
@@ -123,10 +152,50 @@ def reddit_submissions(
 
         # 3. Write new posts
         insert_query = """
-            INSERT INTO submissions (id, title, score, url, num_comments, created_utc, author)
-            VALUES (:id, :title, :score, :url, :num_comments, :created_utc, :author)
+            INSERT INTO submissions (id, title, score, url, num_comments, created_utc, author,post_data)
+            VALUES (:id, :title, :score, :url, :num_comments, :created_utc, :author,:post_data)
         """
         cursor.executemany(insert_query, new_posts)
         conn.commit()
         context.log.info(f"Successfully appended {len(new_posts)} new submissions to the database.")
     # The connection is now safely closed here
+
+
+@asset(
+    description="Previews the 10 most recent submissions from the database.",
+    deps=[reddit_submissions] # This establishes the dependency
+)
+def preview_top_submissions(context: AssetExecutionContext, sqlite_resource: ResourceParam[SQLiteResource]) -> MaterializeResult:
+    """
+    Queries the SQLite database for the 10 most recent posts and logs them as a table.
+    """
+    context.log.info("Querying database for top 10 recent submissions.")
+    with sqlite_resource.get_connection() as conn:
+        # Updated query to calculate the local time on the fly
+        query = """
+        SELECT
+            id,
+            title,
+            score,
+            author,
+            datetime(created_utc, 'unixepoch', 'localtime') AS created_local
+        FROM
+            submissions
+        ORDER BY
+            created_utc DESC
+        LIMIT 10;
+        """
+        
+        # Use pandas to read the SQL query into a DataFrame
+        df = pd.read_sql_query(query, conn)
+
+        if df.empty:
+            context.log.info("No submissions found in the database.")
+            
+        # Log the DataFrame as a string, which Dagster will display nicely
+
+    return MaterializeResult(
+             metadata={
+                "preview": MetadataValue.md(df.to_markdown(index=False)),
+            }
+        )
