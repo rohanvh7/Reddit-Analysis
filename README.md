@@ -47,16 +47,16 @@ The project is designed to be configurable, allowing you to easily change the ta
     This project uses a `.env` file to securely manage your Reddit API credentials. Create a file named `.env` in the root directory of the project.
 
     Copy the following format into your `.env` file and replace the placeholder values with your actual Reddit credentials.
-
+    
     ```ini
     # .env file
-    REDDIT_CLIENT_ID="YOUR_CLIENT_ID_HERE"
-    REDDIT_CLIENT_SECRET="YOUR_CLIENT_SECRET_HERE"
-    REDDIT_USERNAME="YOUR_USERNAME_HERE"
-    REDDIT_PASSWORD="YOUR_PASSWORD_HERE"
-    REDDIT_USER_AGENT="MyDagsterApp/0.1 by u/YourUsername"
+    REDDIT_CLIENT_ID=<YOUR_CLIENT_ID_HERE>
+    REDDIT_CLIENT_SECRET=<YOUR_CLIENT_SECRET_HERE>
+    REDDIT_USERNAME=<YOUR_USERNAME_HERE>
+    REDDIT_PASSWORD=<YOUR_PASSWORD_HERE>
+    REDDIT_USER_AGENT=<MyDagsterApp/0.1 by u/YourUsername>
     ```
-    > **Important**: The `.gitignore` file is already configured to ignore `.env`, ensuring your secrets are not committed to version control.
+    > **Important**: The `.gitignore` file is already configured to ignore `.env`, ensuring your secrets are not committed to version control. Make sure you dont have double quotes or <> around credentials.
 
 ---
 
