@@ -15,20 +15,19 @@ The project is designed to be configurable, allowing you to easily change the ta
 
 ## Prerequisites
 
-* Python 3.8+
+* Python >=3.9, <3.13
 * A Reddit account with API credentials.
 * [uv](https://github.com/astral-sh/uv) (a fast Python package installer and resolver).
-* `praw>=7.8.1`
 
 ---
 
 ## Setup and Installation
 
-1.  **Clone the Repository (Optional)**
-    If this project were in a Git repository, you would start by cloning it:
+1.  **Clone the Repository**
+    Start by cloning the project repository to your local machine.
     ```bash
-    git clone <your-repo-url>
-    cd <your-repo-name>
+    git clone [https://github.com/rohanvh7/Reddit-Analysis.git](https://github.com/rohanvh7/Reddit-Analysis.git)
+    cd Reddit-Analysis
     ```
 
 2.  **Create a Virtual Environment**
@@ -38,29 +37,13 @@ The project is designed to be configurable, allowing you to easily change the ta
     source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
     ```
 
-3.  **Configure `pyproject.toml`**
-    Create a `pyproject.toml` file in the root of your project with the following content. This file defines the project's dependencies.
-
-    ```toml
-    [project]
-    name = "dagster-reddit-etl"
-    version = "0.1.0"
-    requires-python = ">=3.8"
-    dependencies = [
-        "dagster",
-        "dagit",
-        "praw>=7.8.1",
-        "python-dotenv",
-    ]
-    ```
-
-4.  **Install Dependencies with `uv`**
-    With your virtual environment activated, use `uv sync` to install all the dependencies defined in `pyproject.toml`.
+3.  **Install Dependencies with `uv`**
+    With your virtual environment activated, use `uv sync` to install all the dependencies defined in `pyproject.toml`. To include the development dependencies (like `pytest`), use the `--all-extras` flag.
     ```bash
-    uv sync
+    uv sync --all-extras
     ```
 
-5.  **Configure Environment Variables**
+4.  **Configure Environment Variables**
     This project uses a `.env` file to securely manage your Reddit API credentials. Create a file named `.env` in the root directory of the project.
 
     Copy the following format into your `.env` file and replace the placeholder values with your actual Reddit credentials.
@@ -73,7 +56,7 @@ The project is designed to be configurable, allowing you to easily change the ta
     REDDIT_PASSWORD="YOUR_PASSWORD_HERE"
     REDDIT_USER_AGENT="MyDagsterApp/0.1 by u/YourUsername"
     ```
-    > **Important**: Add `.env` to your `.gitignore` file to prevent your secrets from being committed to version control.
+    > **Important**: The `.gitignore` file is already configured to ignore `.env`, ensuring your secrets are not committed to version control.
 
 ---
 
@@ -81,22 +64,16 @@ The project is designed to be configurable, allowing you to easily change the ta
 
 With your virtual environment activated and your `.env` file configured, you can launch the Dagster UI.
 
-1.  **Add `dagster` to `uv`'s toolchain (Optional but Recommended)**
-    This allows you to run `dagster` commands directly.
-    ```bash
-    uv tool install dagster
-    ```
-
-2.  **Start the Dagster UI**
-    From your project's root directory (the one containing `definitions.py`), run the following command:
+1.  **Start the Dagster UI**
+    From your project's root directory, run the `dagster dev` command. Dagster will automatically find your code location based on the `[tool.dagster]` section of your `pyproject.toml`.
     ```bash
     dagster dev
     ```
 
-3.  **Access the UI**
+2.  **Access the UI**
     Open your web browser and navigate to [http://localhost:3000](http://localhost:3000).
 
-4.  **Materialize the Asset**
+3.  **Materialize the Asset**
     In the Dagster UI, you will see the `reddit_submissions` asset. To run the pipeline:
     * Click on the `reddit_submissions` asset in the asset graph.
     * Click the **"Materialize"** button in the top right corner.
